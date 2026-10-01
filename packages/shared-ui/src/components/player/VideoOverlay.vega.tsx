@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { View, StyleSheet, Animated } from "react-native";
-import { DefaultFocus } from "react-tv-space-navigation";
+import { DefaultFocus, SpatialNavigationFocusableView } from "react-tv-space-navigation";
+import { ContextCueAskButton } from "@contextcue/react-native-tv";
 import FocusablePressable from "../FocusablePressable";
 import SeekBar from "./SeekBar";
 import LoadingIndicator from "../LoadingIndicator";
@@ -15,6 +16,7 @@ interface VideoOverlayProps {
   currentTime: number;
   duration: number;
   isBuffering?: boolean;
+  onAsk?: () => void; // ContextCue: shown only for titles in the ContextCue catalog
 }
 
 /**
@@ -39,6 +41,7 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
   currentTime,
   duration,
   isBuffering = false,
+  onAsk,
 }) => {
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -82,6 +85,13 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
             style={styles.controlButton}
           />
         </DefaultFocus>
+        {onAsk && (
+          <SpatialNavigationFocusableView onSelect={onAsk}>
+            {({ isFocused }) => (
+              <ContextCueAskButton onPress={onAsk} style={[styles.controlButton, isFocused && styles.askButtonFocused]} />
+            )}
+          </SpatialNavigationFocusableView>
+        )}
         <SeekBar currentTime={currentTime} duration={duration} />
       </View>
     </Animated.View>
@@ -110,6 +120,10 @@ const overlayStyles = StyleSheet.create({
   },
   controlButton: {
     marginEnd: scaledPixels(20),
+  },
+  askButtonFocused: {
+    borderColor: "#FFFFFF",
+    borderWidth: scaledPixels(4),
   },
 });
 

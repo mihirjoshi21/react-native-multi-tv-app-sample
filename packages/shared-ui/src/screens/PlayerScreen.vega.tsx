@@ -9,6 +9,8 @@ import {
   useKeplerAppStateManager,
 } from '@amazon-devices/react-native-kepler';
 import { VideoPlayer as W3CVideoPlayer } from '@amazon-devices/react-native-w3cmedia';
+import { useContextCue, ContextCueOverlay } from '@contextcue/react-native-tv';
+import { CONTEXTCUE_API_URL } from '../data/moviesData';
 import RemoteControlManager from '../app/remote-control/RemoteControlManager';
 import { SupportedKeys } from '../app/remote-control/SupportedKeys';
 import VideoOverlay from '../components/player/VideoOverlay.vega';
@@ -39,7 +41,7 @@ type PlayerScreenNavigationProp = NativeStackNavigationProp<
 export default function PlayerScreen() {
   const route = useRoute<PlayerScreenRouteProp>();
   const navigation = useNavigation<PlayerScreenNavigationProp>();
-  const { movie, headerImage } = route.params;
+  const { movie, headerImage, titleId } = route.params;
   const isFocused = useIsFocused();
 
   // Kepler-specific hooks
@@ -65,6 +67,23 @@ export default function PlayerScreen() {
   const currentTimeRef = useRef<number>(0);
   const durationRef = useRef<number>(0);
   const videoHandlerRef = useRef<VideoHandler | null>(null);
+
+  // ContextCue spoiler-safe Q&A (only for titles from the ContextCue catalog)
+  const cue = useContextCue({
+    apiBaseUrl: CONTEXTCUE_API_URL,
+    titleId: titleId ?? '',
+    getPositionMs: () => (videoRef.current?.currentTime ?? currentTimeRef.current) * 1000,
+    isPlaying: !paused,
+    disableSession: !titleId,
+  });
+  const cueOpenRef = useRef<boolean>(false);
+  const cueClosedAtRef = useRef<number>(0);
+  useEffect(() => {
+    if (cueOpenRef.current && !cue.state.open) cueClosedAtRef.current = Date.now();
+    cueOpenRef.current = cue.state.open;
+  }, [cue.state.open]);
+  // True while the Ask panel owns the remote (also briefly after it closes, so the same Back press is not seen twice)
+  const cueHasRemote = () => cueOpenRef.current || Date.now() - cueClosedAtRef.current < 500;
 
   // Update refs when state changes
   useEffect(() => {
@@ -214,6 +233,7 @@ export default function PlayerScreen() {
    */
   useEffect(() => {
     const handleKeyDown = (key: SupportedKeys) => {
+      if (cueHasRemote()) return;
       try {
         switch (key) {
           case SupportedKeys.Right:
@@ -245,6 +265,7 @@ export default function PlayerScreen() {
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
+        if (cueHasRemote()) return true;
         navigateBack();
         return true;
       },
@@ -327,7 +348,7 @@ export default function PlayerScreen() {
   }
 
   return (
-    <SpatialNavigationRoot isActive={isFocused}>
+    <SpatialNavigationRoot isActive={isFocused && !cue.state.open}>
       <View style={styles.container}>
         {/* Kepler Video Player with native surface rendering */}
         <VideoPlayer
@@ -351,6 +372,16 @@ export default function PlayerScreen() {
             currentTime={currentTime}
             duration={durationRef.current}
             isBuffering={isVideoBuffering}
+            onAsk={titleId ? cue.open : undefined}
+          />
+        )}
+
+        {titleId && (
+          <ContextCueOverlay
+            controller={cue}
+            onSeek={ms => seek(ms / 1000)}
+            onRequestPause={() => videoHandlerRef.current?.pause()}
+            onRequestResume={() => videoHandlerRef.current?.play()}
           />
         )}
       </View>

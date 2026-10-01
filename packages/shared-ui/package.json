@@ -18,5 +18,8 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "typescript": "~5.7.0"
+  },
+  "dependencies": {
+    "@contextcue/react-native-tv": "file:../../vendor/contextcue-react-native-tv-0.1.0.tgz"
   }
 }

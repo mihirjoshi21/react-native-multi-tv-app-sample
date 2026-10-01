@@ -16,7 +16,7 @@ import {
 import { Direction } from '@bam.tech/lrud';
 import { scaledPixels } from '../hooks/useScale';
 import { RootStackParamList } from '../navigation/types';
-import { fetchMoviesData, CardData } from '../data/moviesData';
+import { fetchMoviesData, fetchContextCueTitles, CardData } from '../data/moviesData';
 import { colors, safeZones } from '../theme';
 import PlatformLinearGradient from '../components/PlatformLinearGradient';
 import { getOpenDrawerDirection } from '../utils/rtl';
@@ -56,8 +56,11 @@ export default function HomeScreen() {
   const trendingRef = useRef<SpatialNavigationVirtualizedListRef>(null);
   const classicsRef = useRef<SpatialNavigationVirtualizedListRef>(null);
   const hipAndModernRef = useRef<SpatialNavigationVirtualizedListRef>(null);
+  const contextCueRef = useRef<SpatialNavigationVirtualizedListRef>(null);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [moviesData, setMoviesData] = useState<CardData[]>([]);
+  const [contextCueData, setContextCueData] = useState<CardData[]>([]);
+  const [focusedCard, setFocusedCard] = useState<CardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isFocused = useIsFocused();
   const isActive = isFocused && !isMenuOpen;
@@ -79,9 +82,11 @@ export default function HomeScreen() {
     };
 
     loadMovies();
+    // Spoiler-safe picks are optional: the row is simply hidden if the ContextCue API is unreachable
+    fetchContextCueTitles().then(setContextCueData).catch(e => console.warn('ContextCue titles unavailable:', e));
   }, []);
 
-  const focusedItem = useMemo(() => moviesData[focusedIndex] || null, [focusedIndex, moviesData]);
+  const focusedItem = focusedCard || moviesData[focusedIndex] || null;
 
   // Memoize header image source to prevent unnecessary re-renders
   const headerImageSource = useMemo(
@@ -145,9 +150,13 @@ export default function HomeScreen() {
             ratingCount: item.ratingCount,
             contentRating: item.contentRating,
             duration: item.duration,
+            titleId: item.titleId,
           });
         }}
-        onFocus={() => setFocusedIndex(index)}
+        onFocus={() => {
+          setFocusedIndex(index);
+          setFocusedCard(item);
+        }}
       >
         {({ isFocused }) => <MovieItem item={item} isFocused={isFocused} styles={gridStyles} />}
       </SpatialNavigationFocusableView>
@@ -156,14 +165,14 @@ export default function HomeScreen() {
   );
 
   const renderScrollableRow = useCallback(
-    (title: string, _ref: React.RefObject<SpatialNavigationVirtualizedListRef>) => {
+    (title: string, _ref: React.RefObject<SpatialNavigationVirtualizedListRef>, data: CardData[] = moviesData) => {
       return (
         <View style={gridStyles.highlightsContainer}>
           <Text style={gridStyles.highlightsTitle}>{title}</Text>
           <SpatialNavigationNode>
             <DefaultFocus>
               <SpatialNavigationVirtualizedList
-                data={moviesData}
+                data={data}
                 orientation="horizontal"
                 renderItem={renderItem}
                 itemSize={scaledPixels(440)}
@@ -193,6 +202,8 @@ export default function HomeScreen() {
       <View style={gridStyles.container}>
         {renderHeader()}
         <SpatialNavigationScrollView offsetFromStart={scaledPixels(60)} style={gridStyles.scrollContent}>
+          {contextCueData.length > 0 &&
+            renderScrollableRow('Spoiler-safe picks (ContextCue)', contextCueRef, contextCueData)}
           {renderScrollableRow('Trending Movies', trendingRef)}
           {renderScrollableRow('Classics', classicsRef)}
           {renderScrollableRow('Hip and Modern', hipAndModernRef)}

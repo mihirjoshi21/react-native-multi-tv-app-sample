@@ -12,10 +12,12 @@ export type RootStackParamList = {
     ratingCount?: number;
     contentRating?: string;
     duration?: number;
+    titleId?: string;
   };
   Player: {
     movie: string;
     headerImage: string;
+    titleId?: string;
   };
 };
 

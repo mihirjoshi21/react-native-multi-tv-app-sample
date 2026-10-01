@@ -2449,6 +2449,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@contextcue/react-native-tv@file:../../vendor/contextcue-react-native-tv-0.1.0.tgz::locator=%40multi-tv%2Fshared-ui%40workspace%3Apackages%2Fshared-ui":
+  version: 0.1.0
+  resolution: "@contextcue/react-native-tv@file:../../vendor/contextcue-react-native-tv-0.1.0.tgz#../../vendor/contextcue-react-native-tv-0.1.0.tgz::hash=926a7c&locator=%40multi-tv%2Fshared-ui%40workspace%3Apackages%2Fshared-ui"
+  peerDependencies:
+    react: ">=18"
+    react-native: ">=0.72"
+  checksum: 10c0/4d76053b5325129d9dd00398c3f48702ad58a554217e93fb247a56815a3e54e09439e54fb32cc39e19112a4ecd9e1e9f6a0e525e2526d42143659062809bcb09
+  languageName: node
+  linkType: hard
+
 "@egjs/hammerjs@npm:^2.0.17":
   version: 2.0.17
   resolution: "@egjs/hammerjs@npm:2.0.17"
@@ -3964,6 +3974,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@multi-tv/shared-ui@workspace:packages/shared-ui"
   dependencies:
+    "@contextcue/react-native-tv": "file:../../vendor/contextcue-react-native-tv-0.1.0.tgz"
     "@types/react": "npm:~19.1.0"
     typescript: "npm:~5.7.0"
   peerDependencies:

@@ -42,6 +42,7 @@ export type CardData = {
   ratingCount?: number;
   contentRating?: string;
   trending?: boolean;
+  titleId?: string; // ContextCue catalog id (enables the Ask panel in the player)
 };
 
 const CATALOG_URL = 'https://giolaq.github.io/scrap-tv-feed/catalog.json';
@@ -80,6 +81,27 @@ export const fetchMoviesData = async (): Promise<CardData[]> => {
     console.error('Failed to fetch movies catalog:', error);
     throw error;
   }
+};
+
+// ContextCue spoiler-safe Q&A catalog (titles that have subtitles indexed in the ContextCue backend)
+export const CONTEXTCUE_API_URL = 'https://8ctx9nuzjk.execute-api.us-east-1.amazonaws.com';
+
+export const fetchContextCueTitles = async (): Promise<CardData[]> => {
+  const response = await fetch(`${CONTEXTCUE_API_URL}/v1/titles`);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  const titles: Array<{ id: string; title: string; durationMs: number; poster: string; videoUrl: string; license?: string }> =
+    await response.json();
+  return titles.map(t => ({
+    id: t.id,
+    titleId: t.id,
+    title: t.title,
+    description: `Ask questions while you watch - answers never spoil what you haven't seen yet. ${t.license ?? ''}`,
+    headerImage: t.poster,
+    movie: t.videoUrl,
+    duration: Math.round(t.durationMs / 1000),
+  }));
 };
 
 // Empty array as placeholder - movies will be fetched dynamically
