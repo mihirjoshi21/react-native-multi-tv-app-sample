@@ -70,10 +70,20 @@ export default function HomeScreen() {
     const loadMovies = async () => {
       try {
         setIsLoading(true);
-        const movies = await fetchMoviesData();
+        // Load the optional ContextCue row together with the catalog so every row mounts in the same
+        // pass: spatial-navigation registers nodes in mount order, and a row that appears later would
+        // be appended to the end of the focus order instead of where it is drawn.
+        const [movies, contextCueTitles] = await Promise.all([
+          fetchMoviesData(),
+          fetchContextCueTitles().catch(e => {
+            console.warn('ContextCue titles unavailable:', e);
+            return [] as CardData[];
+          }),
+        ]);
         console.log('Fetched movies:', movies.length);
         console.log('First movie:', movies[0]);
         setMoviesData(movies);
+        setContextCueData(contextCueTitles);
       } catch (error) {
         console.error('Failed to load movies:', error);
       } finally {
@@ -82,8 +92,6 @@ export default function HomeScreen() {
     };
 
     loadMovies();
-    // Spoiler-safe picks are optional: the row is simply hidden if the ContextCue API is unreachable
-    fetchContextCueTitles().then(setContextCueData).catch(e => console.warn('ContextCue titles unavailable:', e));
   }, []);
 
   const focusedItem = focusedCard || moviesData[focusedIndex] || null;

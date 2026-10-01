@@ -88,7 +88,7 @@ const VideoOverlay: React.FC<VideoOverlayProps> = React.memo(({
         {onAsk && (
           <SpatialNavigationFocusableView onSelect={onAsk}>
             {({ isFocused }) => (
-              <ContextCueAskButton onPress={onAsk} style={[styles.controlButton, isFocused && styles.askButtonFocused]} />
+              <ContextCueAskButton onPress={onAsk} label="▲ Ask ContextCue" style={[styles.controlButton, isFocused && styles.askButtonFocused]} />
             )}
           </SpatialNavigationFocusableView>
         )}

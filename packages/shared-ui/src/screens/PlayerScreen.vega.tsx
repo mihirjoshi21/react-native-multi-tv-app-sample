@@ -250,6 +250,11 @@ export default function PlayerScreen() {
           case SupportedKeys.PlayPause:
             togglePausePlay();
             break;
+          case SupportedKeys.Up:
+            // Left/Right are reserved for seeking in this player, so Up opens ContextCue's Ask panel
+            if (titleId) cue.open();
+            else showControls();
+            break;
           default:
             showControls();
             break;
@@ -275,7 +280,7 @@ export default function PlayerScreen() {
       RemoteControlManager.removeKeydownListener(listener);
       backHandler.remove();
     };
-  }, [seek, togglePausePlay, showControls, navigateBack]);
+  }, [seek, togglePausePlay, showControls, navigateBack, titleId, cue.open]);
 
   /**
    * Handle surface view creation
